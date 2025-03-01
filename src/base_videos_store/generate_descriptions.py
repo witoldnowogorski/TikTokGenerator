@@ -30,4 +30,4 @@ if __name__ == "__main__":
 
     image_description_agent = ImageDescriptionAgent()
     df = image_description_agent.generate(df)
-    df.to_csv(DATA_PATH / "descriptions.csv", index=False)
+    df.to_csv(DATA_PATH / "aviation.csv", index=False)

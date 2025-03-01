@@ -2,7 +2,7 @@ import os
 
 from google.cloud import texttospeech
 
-from src.utils import BaseAgent
+from src.utils import BaseAgent, logger
 
 
 class AudioGenerationAgent(BaseAgent):
@@ -34,4 +34,5 @@ class AudioGenerationAgent(BaseAgent):
         with open(self.output_dir, "wb") as out:
             out.write(response.audio_content)
 
+        logger.debug("Generated audio for a video")
         return self.output_dir

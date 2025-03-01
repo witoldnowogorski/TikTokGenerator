@@ -1,6 +1,7 @@
+import time
 import chromadb
 
-from src.utils import BaseAgent, retry_on_exception
+from src.utils import BaseAgent, retry_on_exception, logger
 
 
 class EmbeddingAgent(BaseAgent):
@@ -15,12 +16,18 @@ class EmbeddingAgent(BaseAgent):
 
 class VectorStore:
     def __init__(self):
-        self.client = chromadb.PersistentClient(path="vector_store/:memory:")
+        self.client = chromadb.PersistentClient(path=":memory:")
         self.collection = self.client.get_or_create_collection(name="vector_store")
         self.embedding_agent = EmbeddingAgent()
 
     def store(self, descriptions_df):
-        for index, row in descriptions_df.iterrows():
+
+        for i, data in enumerate(descriptions_df.iterrows()):
+            if i % 30 == 0:
+                logger.debug("Generating vector store: {} / {}".format(i, len(descriptions_df)))
+
+            index, row = data
+            time.sleep(1)
             description = row["description"]
             embedding = self.embedding_agent.generate(description)
             self.upload_single_record(index, embedding, description, row["video_path"])

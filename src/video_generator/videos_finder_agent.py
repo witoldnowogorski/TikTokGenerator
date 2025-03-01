@@ -1,9 +1,6 @@
 import ast
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-from src.utils import BaseAgent
-from src.video_generator.vector_store import VectorStore
+from src.utils import BaseAgent, logger
 
 
 SCRIPT = """
@@ -30,26 +27,28 @@ Ideas for one segment must differ from each other, they can't be similar.
 Here is script: {SCRIPT}
 """
 
-NUM_WORDS_TO_READ_TIME_RATIO = 0.03
 
 class VideoFinderAgent(BaseAgent):
-    def generate(self, script, vector_store):
-        num_videos = int(len(script.split(" ")) * NUM_WORDS_TO_READ_TIME_RATIO)
+    def generate(self, script, vector_store, num_videos):
+        logger.debug(f"Looking for {num_videos} videos ...")
         prompt_content = [DESCRIBE_SUITABLE_VIDEO_PROMPT.format(NUM_VIDEOS=num_videos, SCRIPT=script)]
         response = self._inference(prompt_content)
+
         descriptions = self._extract_content(response)
 
         paths = []
-        for descs in descriptions:
+        for i, descs in enumerate(descriptions):
             min_distance = 1000
             best_match = None
             for desc in descs:
                 vs_res = vector_store.query(desc, k=1)
                 distance = vs_res["distances"][0][0]
-                if distance < min_distance:
+                match = vs_res["metadatas"][0][0]
+                if distance < min_distance and match not in paths:
                     min_distance = distance
-                    best_match = vs_res["metadatas"][0][0]
+                    best_match = match
 
+            logger.debug(f"Searching for a most suitable video: {i} / {num_videos}, Best match: {best_match}")
             paths.append(best_match)
 
         return [v["path"] for v in paths]

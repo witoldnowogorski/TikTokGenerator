@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 
 from src.video_generator.audio_transcriber import AudioTranscriber
+from src.utils import logger
 
 
 class VideoBuilder:
@@ -20,12 +21,13 @@ class VideoBuilder:
         audio_path,
         video_paths,
         target_resolution=(500, 800),
-        font_path = "assets/fonts/Roboto-VariableFont_wdth,wght.ttf",
+        font_path = "/Users/wnowogorski/PycharmProjects/TikTokGenerator/assets/fonts/Roboto-VariableFont_wdth,wght.ttf",
         font_size = 25,
         subtitle_margin = 125,
         text_color: str = "white",
         bg_color: str = "red",
         max_words: int = 5,
+        time_per_base_video: int = 8,
         output_path="generated_videos/full_video.mp4",
     ):
         self.audio_path = audio_path
@@ -39,6 +41,7 @@ class VideoBuilder:
         self.text_color = text_color
         self.bg_color = bg_color
         self.max_words = max_words
+        self.time_per_base_video = time_per_base_video
 
         self.output_path = output_path
         out_directory = os.path.dirname(output_path)
@@ -49,13 +52,18 @@ class VideoBuilder:
         self.audio_transcriber = AudioTranscriber()
 
     def generate(self):
+        logger.debug("Video Builder - Transcribing audio ... ")
         self.subtitles = self.audio_transcriber.transcribe_audio_with_timestamps(self.audio_path)
 
+        logger.debug("Video Builder - Creating video ... ")
         base_video = self._create_video_from_videos()
         base_video = base_video.set_audio(self.audio_clip)
+        logger.debug("")
 
+        logger.debug("Video Builder - Adding subtitles ... ")
         subtitle_clips = self.create_subtitle_clips_from_transcription(self.subtitles)
 
+        logger.debug("Video Builder - Saving video ...")
         final_video = CompositeVideoClip([base_video, *subtitle_clips], size=base_video.size)
         final_video.write_videofile(self.output_path, fps=24, codec="libx264", audio_codec="aac")
         base_video.close()
@@ -85,9 +93,9 @@ class VideoBuilder:
         for path in self.video_paths:
             clip = VideoFileClip(path)
             clip = self._resize_clip(clip)
+            clip = clip.set_duration(self.time_per_base_video)
             clips.append(clip)
         final_clip = concatenate_videoclips(clips, method="compose")
-        # Trim or loop to match the audio duration if needed.
         final_clip = final_clip.set_duration(self.duration)
         return final_clip
 
