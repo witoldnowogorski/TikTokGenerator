@@ -19,6 +19,6 @@ Scrapes free base videos from the web, generates descriptions and stores embeddi
 
 ### Videos generator
 Generates script and audio, finds most suitable base videos and creates final video from them.
+![Untitled Diagram drawio-3](https://github.com/user-attachments/assets/7e6d5e4b-3e1b-48de-aa22-3c0b73b3200e)
 
-![Untitled Diagram drawio-2](https://github.com/user-attachments/assets/f774ee55-95f0-4ba5-897a-caf43fde23d4)
 
